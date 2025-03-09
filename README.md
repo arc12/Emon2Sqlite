@@ -4,6 +4,7 @@ This is a utility Python class to sync data from an EmonCMS instance with a SQLi
 Notes:  
 - Currently limited to processing phpfina data.
 - The SQLite database file will be MUCH larger than the phpfina.
+- By default creates a file "emon.db" in the working directory. Tables are named according to the feed names in EmonCMS, prefixed with the feed tag if applicable. The data column is named according to the units specified in EmonCMS or defaults to "value". If you change a feed definition in EmonCMS, things will break!
 - For browsing the data and ad hoc queries, I find this multi-OS application useful: https://sqlitebrowser.org/ .
 - See the comments in emon2sqlite.py for more info.
 - Only tested against a local EmonPi.
@@ -42,4 +43,18 @@ from emon2sqlite import Emon2Sqlite
 
 e2s = Emon2Sqlite("url", "username", "password")
 e2s.sync_feeds(ignore_feed_ids=(2, 3, 8))
+```
+
+## Consuming the Data
+Something like:
+```
+import pandas as pd
+import sqlite3
+
+# range of "unix epoch" timees to select
+ts_from, ts_to = 1740787200, 1740873600
+
+con = sqlite3.connect("emon.db")
+df = pd.read_sql_query(f"SELECT timestamp, value FROM power1 WHERE timestamp >= {ts_from} AND timestamp < {ts_to}", con)
+con.close()
 ```
